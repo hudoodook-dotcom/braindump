@@ -1,0 +1,17 @@
+{
+  "name": "BrainDump · 생각 비우기",
+  "short_name": "BrainDump",
+  "description": "ADHD를 위한 생각 비우기 노트 · Mindleaf",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4ece0",
+  "theme_color": "#a47551",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

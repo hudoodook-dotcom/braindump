@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#a47551" />
+<title>Brain Dump · 생각 비우기</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="BrainDump" />
+<style>
+  :root {
+    --bg: #f4ece0;
+    --card: #fffaf3;
+    --ink: #4a4036;
+    --ink-soft: #8c7d6b;
+    --line: #e6dac9;
+    --accent: #a47551;
+    --accent-soft: #f0e5d6;
+    --now: #c46b5a;
+    --later: #d9a441;
+    --delegate: #7c9a92;
+    --keep: #8aa06b;
+    --trash: #b3a695;
+    --shadow: 0 6px 24px rgba(120, 95, 60, .14);
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #211c16;
+      --card: #2b251e;
+      --ink: #efe6d6;
+      --ink-soft: #b3a690;
+      --line: #3a3127;
+      --accent: #c79e7b;
+      --accent-soft: #382e23;
+      --now: #d07b69;
+      --later: #d9a441;
+      --delegate: #8aa79e;
+      --keep: #9aae7b;
+      --trash: #9c8f7d;
+      --shadow: 0 6px 24px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+      "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 18px 16px 96px; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { max-width: 820px; margin: 0 auto; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px; }
+  .logo { font-weight: 800; font-size: 17px; letter-spacing: -.3px; }
+  .logo span { color: var(--accent); }
+  .bar .spacer { flex: 1; }
+  .ghost-btn {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+    padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: .15s;
+  }
+  .ghost-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Hero */
+  .hero { text-align: center; padding: 14px 4px 22px; }
+  .hero h1 { font-size: 26px; margin: 6px 0 6px; letter-spacing: -.6px; }
+  .hero p { color: var(--ink-soft); margin: 0; font-size: 14.5px; }
+
+  /* Format grid */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  @media (max-width: 480px){ .grid { grid-template-columns: 1fr; } }
+  .fmt {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; cursor: pointer; text-align: left; transition: .18s; position: relative;
+    box-shadow: var(--shadow);
+  }
+  .fmt:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .fmt .emoji { font-size: 26px; }
+  .fmt h3 { margin: 8px 0 4px; font-size: 16px; }
+  .fmt p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+  /* Panel / dump */
+  .panel {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px;
+  }
+  .dump-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .dump-head .emoji { font-size: 24px; }
+  .dump-head h2 { margin: 0; font-size: 18px; }
+  .dump-head .sub { width: 100%; color: var(--ink-soft); font-size: 13.5px; margin-top: 2px; }
+  .prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    background: var(--accent-soft); color: var(--accent); border: none;
+    padding: 6px 11px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; transition: .15s;
+  }
+  .chip:hover { filter: brightness(.96); }
+  textarea#dump {
+    width: 100%; min-height: 46vh; border: none; resize: vertical; outline: none;
+    background: transparent; color: var(--ink); font-size: 17px; line-height: 1.7;
+    font-family: inherit; padding: 4px 2px;
+  }
+  textarea#dump::placeholder { color: var(--ink-soft); opacity: .7; }
+
+  .dump-foot {
+    display: flex; align-items: center; gap: 10px; margin-top: 12px;
+    padding-top: 12px; border-top: 1px solid var(--line); flex-wrap: wrap;
+  }
+  .count { font-size: 12.5px; color: var(--ink-soft); }
+  .dump-foot .spacer { flex: 1; }
+
+  /* Timer */
+  .timer {
+    display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums;
+    font-weight: 700; font-size: 14px; color: var(--accent);
+    background: var(--accent-soft); padding: 6px 12px; border-radius: 999px;
+  }
+  .timer.off { color: var(--ink-soft); background: transparent; border: 1px dashed var(--line); cursor: pointer; }
+  .timer.done { color: #fff; background: var(--now); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .6; } }
+
+  /* Buttons */
+  .btn {
+    border: none; background: var(--accent); color: #fff; padding: 11px 18px;
+    border-radius: 999px; font-size: 14.5px; font-weight: 700; cursor: pointer;
+    transition: .15s; box-shadow: 0 4px 14px rgba(164,117,81,.35);
+  }
+  .btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  .btn.sec { background: var(--card); color: var(--ink-soft); border: 1px solid var(--line); box-shadow: none; }
+  .btn.sec:hover { color: var(--accent); border-color: var(--accent); }
+  .btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+  /* Organize tabs (axes) */
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+    padding: 8px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; transition: .15s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(164,117,81,.3); }
+
+  /* Kanban */
+  .columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .col {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 10px; min-height: 120px; transition: .15s;
+  }
+  .col.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .col-head { display: flex; align-items: center; gap: 6px; font-size: 12.5px;
+    font-weight: 800; margin-bottom: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .col .num { margin-left: auto; color: var(--ink-soft); font-weight: 600; }
+  .card-item {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 10px; font-size: 13.5px; margin-bottom: 7px; cursor: grab;
+    word-break: break-word; transition: .12s; position: relative;
+  }
+  .card-item:active { cursor: grabbing; }
+  .card-item.dragging { opacity: .4; }
+  .card-item .x {
+    position: absolute; top: 4px; right: 6px; color: var(--ink-soft);
+    font-size: 14px; cursor: pointer; opacity: 0; line-height: 1;
+  }
+  .card-item:hover .x { opacity: 1; }
+  .inbox-wrap { margin-bottom: 16px; }
+  .inbox-wrap .col { min-height: 60px; border-style: dashed; }
+
+  /* History */
+  .hist-item {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px; margin-bottom: 10px; cursor: pointer; transition: .15s; box-shadow: var(--shadow);
+  }
+  .hist-item:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .hist-item .meta { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-soft); }
+  .hist-item .preview { margin-top: 6px; font-size: 14px; color: var(--ink);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hist-item .del { float: right; color: var(--trash); cursor: pointer; font-size: 12px; }
+  .empty { text-align: center; color: var(--ink-soft); padding: 40px 10px; font-size: 14px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px;
+    font-size: 13.5px; font-weight: 600; opacity: 0; pointer-events: none; transition: .25s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Recent on home */
+  .recent { margin-top: 30px; }
+  .recent-head { display: flex; align-items: center; margin-bottom: 12px; }
+  .recent-head h2 { font-size: 16px; margin: 0; }
+  .link-btn { margin-left: auto; background: none; border: none; color: var(--accent);
+    font-size: 13px; font-weight: 700; cursor: pointer; }
+  .link-btn:hover { text-decoration: underline; }
+
+  /* History toolbar */
+  .hist-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .search { width: 100%; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 999px; padding: 11px 16px; font-size: 14px; outline: none; font-family: inherit; }
+  .search:focus { border-color: var(--accent); }
+  .fchips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .fchip { border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
+    padding: 6px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: .15s; }
+  .fchip:hover { border-color: var(--accent); color: var(--accent); }
+  .fchip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .ghost-btn.accent { color: var(--accent); border-color: var(--accent); }
+  .data-tools { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 4px 0 2px; }
+  .data-tools .btn { padding: 9px 16px; font-size: 13.5px; }
+  .data-note { text-align: center; color: var(--ink-soft); font-size: 12px; margin: 10px 0 0; }
+
+  /* Footer */
+  .site-foot {
+    text-align: center; padding: 28px 16px 36px; color: var(--ink-soft);
+    font-size: 12.5px; border-top: 1px solid var(--line); margin-top: 8px;
+  }
+  .site-foot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .site-foot a:hover { text-decoration: underline; }
+
+  .hidden { display: none !important; }
+  .fade-in { animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">🧠 Brain<span>Dump</span></div>
+    <div class="spacer"></div>
+    <button class="ghost-btn" id="navInstall" style="display:none">⬇ 앱 설치</button>
+    <button class="ghost-btn" id="navHome">＋ 새로 쏟기</button>
+    <button class="ghost-btn accent" id="navHist">🗂 기록</button>
+  </div>
+</header>
+
+<div class="wrap" id="app"></div>
+<input type="file" id="importFile" accept="application/json,.json" style="display:none" />
+
+<footer class="site-foot">
+  © 2026 Mindleaf · <a href="https://www.mindleaf.co.kr" target="_blank" rel="noopener">www.mindleaf.co.kr</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Config ---------------- */
+const PALETTE = ['#c46b5a','#d9a441','#7c9a92','#8aa06b','#b08fa6','#cf8a6b','#6f9a9a','#bb8b6b'];
+// 라벨 목록 → 정리 칸(버킷) 객체로
+const cat = (labels) => labels.map((label,i)=>({ id:'b'+i, label, color: PALETTE[i % PALETTE.length] }));
+
+const FORMATS = [
+  { id:'free', emoji:'🌊', name:'자유 덤프',
+    desc:'머릿속 모든 걸 순서 없이 그냥 쏟아내기',
+    placeholder:'지금 머릿속에 떠오르는 모든 걸 적어보세요.\n맞춤법, 순서, 완성도 신경 쓰지 말고요.\n생각 하나마다 줄을 바꾸면 나중에 정리가 쉬워요.',
+    prompts:['지금 신경 쓰이는 거','자꾸 떠오르는 생각','말 못 한 것','그냥 떠오른 단어'],
+    organize:{ type:'buckets', buckets:[
+      { id:'now',      label:'지금',  color:'var(--now)' },
+      { id:'later',    label:'나중에', color:'var(--later)' },
+      { id:'delegate', label:'위임',  color:'var(--delegate)' },
+      { id:'keep',     label:'보관',  color:'var(--keep)' },
+      { id:'trash',    label:'버리기', color:'var(--trash)' },
+    ]}},
+
+  { id:'todo', emoji:'✅', name:'할 일 쏟기',
+    desc:'할 일을 쏟고 우선순위·에너지·요일로 정리',
+    placeholder:'해야 할 일을 떠오르는 대로 적어요. 큰 일, 작은 일 다 좋아요.\n예: 약 받아오기 / 메일 답장 / 엄마한테 전화 / 빨래\n\n정리 단계에서 우선순위 · 에너지 · 요일 세 기준으로 나눌 수 있어요.',
+    prompts:['오늘 꼭','까먹으면 안 되는 거','미루고 있던 거','5분이면 되는 거'],
+    organize:{ type:'axes', axes:[
+      { id:'priority', label:'우선순위', buckets:cat(['🔥 지금 당장','⭐ 중요','🌱 여유될 때','🗑 안 해도 됨']) },
+      { id:'energy',   label:'에너지',   buckets:cat(['⚡ 높은 에너지','🔋 보통','🪫 낮을 때도 OK']) },
+      { id:'day',      label:'요일',     buckets:cat(['월','화','수','목','금','토','일']) },
+    ]}},
+
+  { id:'worry', emoji:'😵', name:'걱정 비우기',
+    desc:'걱정을 꺼내 통제 가능/불가로 분류',
+    placeholder:'머릿속을 맴도는 걱정을 적어보세요. 적는 것만으로 머리가 가벼워져요.\n\n위의 칩을 누르면 "내가 바꿀 수 있는 것: …" 처럼 적혀서,\n정리 단계에서 자동으로 분류돼요.',
+    organize:{ type:'buckets', buckets:cat(['지금 제일 무거운 것','내가 바꿀 수 있는 것','내가 못 바꾸는 것','사실 별일 아닌 것']) }},
+
+  { id:'idea', emoji:'💡', name:'아이디어 폭발',
+    desc:'판단 없이 쏟고 실행 단계로 분류',
+    placeholder:'말이 되든 안 되든 떠오르는 아이디어를 다 적어요. 검열은 끄고 양이 먼저!\n\n위의 칩을 누르면 카테고리별로 적혀서 정리가 자동으로 돼요.',
+    organize:{ type:'buckets', buckets:cat(['당장 해볼 것','언젠가 해볼 것','더 키워볼 것','그냥 메모']) }},
+
+  { id:'decision', emoji:'🎯', name:'결정 정리',
+    desc:'선택지·장단점·결론으로 정리',
+    placeholder:'무엇을 결정해야 하나요?\n\n위의 칩으로 선택지, 끌리는 점, 걱정되는 점을 적어두면\n정리 단계에서 한눈에 비교하고 결론을 내릴 수 있어요.',
+    organize:{ type:'buckets', buckets:cat(['선택지','끌리는 점','걱정되는 점','내 결정']) }},
+
+  { id:'reading', emoji:'📖', name:'독서 정리',
+    desc:'책에서 얻은 것을 문장·생각·실행으로',
+    placeholder:'책을 읽으며 떠오른 것을 자유롭게 적어요.\n\n위의 칩을 누르면 "인상 깊은 문장: …" 처럼 적혀서,\n정리 단계에서 자동으로 분류돼요.',
+    organize:{ type:'buckets', buckets:cat(['인상 깊은 문장','떠오른 생각','질문·궁금한 것','적용할 것']) }},
+];
+
+const KEY = 'braindump.entries.v1';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+const save = (d) => localStorage.setItem(KEY, JSON.stringify(d));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+let state = { view:'home', format:null, entryId:null, timer:null, axis:null, histFilter:'all', histQuery:'' };
+
+/* ---------------- Helpers ---------------- */
+const app = document.getElementById('app');
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const escapeReg = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function fmtDate(ts){
+  const d = new Date(ts), now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  if (sameDay) return '오늘 ' + time;
+  return d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'}) + ' ' + time;
+}
+const fmtById = (id) => FORMATS.find(f=>f.id===id) || FORMATS[0];
+const isOrganized = (e) => e.cards && e.cards.some(c => c.bucket || (c.axes && Object.keys(c.axes).length));
+
+/* ---------------- Router ---------------- */
+function render(){
+  if (state.view==='home') return renderHome();
+  if (state.view==='dump') return renderDump();
+  if (state.view==='organize') return renderOrganize();
+  if (state.view==='history') return renderHistory();
+}
+
+/* ---------------- Home ---------------- */
+function renderHome(){
+  stopTimer();
+  app.className = 'wrap fade-in';
+  const recent = load().filter(e=>e.text && e.text.trim()).slice(0,4);
+  app.innerHTML = `
+    <div class="hero">
+      <h1>머릿속, 일단 다 쏟아내요</h1>
+      <p>완벽하게 쓰려 하지 말고 그냥 꺼내세요. 정리는 그다음에.</p>
+    </div>
+    <div class="grid">
+      ${FORMATS.map(f=>`
+        <button class="fmt" data-id="${f.id}">
+          <div class="emoji">${f.emoji}</div>
+          <h3>${f.name}</h3>
+          <p>${f.desc}</p>
+        </button>`).join('')}
+    </div>
+    ${recent.length ? `
+    <div class="recent">
+      <div class="recent-head">
+        <h2>최근 기록</h2>
+        <button class="link-btn" id="seeAll">전체 보기 →</button>
+      </div>
+      ${recent.map(histItemHTML).join('')}
+    </div>`:''}`;
+  app.querySelectorAll('.fmt').forEach(b=> b.onclick = ()=> startDump(b.dataset.id));
+  const seeAll = document.getElementById('seeAll');
+  if (seeAll) seeAll.onclick = ()=>{ state.histFilter='all'; state.histQuery=''; go('history'); };
+  bindHistItems(app);
+}
+
+function startDump(formatId){
+  const entry = { id: uid(), format: formatId, text:'', created: Date.now(), updated: Date.now(), cards: null };
+  const all = load(); all.unshift(entry); save(all);
+  state.format = formatId; state.entryId = entry.id; state.axis = null; state.view = 'dump';
+  render();
+}
+
+function getEntry(){ return load().find(e=>e.id===state.entryId); }
+function updateEntry(patch){
+  const all = load(); const i = all.findIndex(e=>e.id===state.entryId);
+  if (i<0) return; all[i] = {...all[i], ...patch, updated: Date.now()}; save(all);
+}
+
+/* ---------------- Dump ---------------- */
+function renderDump(){
+  const f = fmtById(state.format);
+  const entry = getEntry();
+  // 카테고리형 포맷은 정리 칸 라벨을 칩으로 사용 → 쏟으면서 바로 분류됨
+  const chips = (f.prompts && f.prompts.length)
+    ? f.prompts
+    : (f.organize.type==='buckets' ? f.organize.buckets.map(b=>b.label) : []);
+
+  app.className = 'wrap fade-in';
+  app.innerHTML = `
+    <div class="panel">
+      <div class="dump-head">
+        <span class="emoji">${f.emoji}</span>
+        <h2>${f.name}</h2>
+        <div class="sub">${f.desc}</div>
+      </div>
+      ${chips.length ? `<div class="prompts">
+        ${chips.map(p=>`<button class="chip" data-p="${esc(p)}">＋ ${esc(p)}</button>`).join('')}
+      </div>`:''}
+      <textarea id="dump" placeholder="${esc(f.placeholder)}">${esc(entry?entry.text:'')}</textarea>
+      <div class="dump-foot">
+        <div class="timer off" id="timer">⏱ 타이머</div>
+        <span class="count" id="count">0자 · 0줄</span>
+        <div class="spacer"></div>
+        <button class="btn sec" id="backBtn">나가기</button>
+        <button class="btn" id="orgBtn">정리하러 가기 →</button>
+      </div>
+    </div>`;
+
+  const ta = document.getElementById('dump');
+  const count = document.getElementById('count');
+  const refreshCount = ()=>{
+    const v = ta.value;
+    const lines = v.split('\n').filter(l=>l.trim()).length;
+    count.textContent = `${v.length}자 · ${lines}줄`;
+  };
+  const autosave = ()=> updateEntry({text: ta.value});
+  ta.addEventListener('input', ()=>{ refreshCount(); autosave(); });
+  refreshCount();
+  setTimeout(()=>ta.focus(), 50);
+
+  app.querySelectorAll('.chip').forEach(c=>{
+    c.onclick = ()=>{
+      const pre = ta.value && !ta.value.endsWith('\n') ? '\n' : '';
+      ta.value += `${pre}${c.dataset.p}: `;
+      ta.focus(); refreshCount(); autosave();
+    };
+  });
+
+  const timerEl = document.getElementById('timer');
+  let remaining = 300;
+  timerEl.onclick = ()=> toggleTimer(timerEl, remaining, (r)=>remaining=r);
+
+  document.getElementById('backBtn').onclick = ()=>{ autosave(); pruneEmpty(); go('home'); };
+  document.getElementById('orgBtn').onclick = ()=>{
+    autosave();
+    const e = getEntry();
+    if (!e || !e.text.trim()){ toast('먼저 조금이라도 쏟아내 보세요 🙂'); return; }
+    state.axis = null; state.view='organize'; render();
+  };
+}
+
+/* ---------------- Timer ---------------- */
+function toggleTimer(el, startSec, onTick){
+  if (state.timer){ stopTimer(); el.className='timer off'; el.textContent='⏱ 타이머'; return; }
+  let rem = startSec;
+  const tick = ()=>{
+    const m = Math.floor(rem/60), s = rem%60;
+    if (rem<=0){ stopTimer(); el.className='timer done'; el.textContent='⏰ 시간 끝! 잘했어요'; toast('수고했어요 👏'); return; }
+    el.className='timer'; el.textContent = `⏱ ${m}:${String(s).padStart(2,'0')}`;
+    rem--; onTick && onTick(rem);
+  };
+  tick();
+  state.timer = setInterval(tick, 1000);
+}
+function stopTimer(){ if (state.timer){ clearInterval(state.timer); state.timer=null; } }
+
+/* ---------------- Build cards ---------------- */
+function buildCards(entry){
+  const f = fmtById(entry.format);
+  const buckets = f.organize.type==='buckets' ? f.organize.buckets : null;
+  return entry.text.split('\n')
+    .map(l=>l.replace(/^[\s\-\*•\d\.\)]+/, '').trim())
+    .filter(l=>l.length)
+    .map(line=>{
+      let bucket=null, text=line;
+      if (buckets){
+        for (const b of buckets){
+          const m = line.match(new RegExp('^' + escapeReg(b.label) + '\\s*[:：]\\s*(.+)$'));
+          if (m){ bucket=b.id; text=m[1].trim(); break; }
+        }
+      }
+      const card = { id: uid(), text };
+      if (f.organize.type==='buckets') card.bucket = bucket; else card.axes = {};
+      return card;
+    })
+    .filter(c=>c.text.length);
+}
+
+/* ---------------- Organize (buckets & axes 통합) ---------------- */
+function renderOrganize(){
+  stopTimer();
+  const entry = getEntry();
+  const f = fmtById(entry.format);
+  if (!entry.cards){ entry.cards = buildCards(entry); updateEntry({cards: entry.cards}); }
+  app.className = 'wrap fade-in';
+
+  const isAxes = f.organize.type==='axes';
+  if (isAxes && (!state.axis || !f.organize.axes.some(a=>a.id===state.axis)))
+    state.axis = f.organize.axes[0].id;
+  const axis = isAxes ? f.organize.axes.find(a=>a.id===state.axis) : null;
+  const buckets = isAxes ? axis.buckets : f.organize.buckets;
+
+  const getB = (c)=> isAxes ? ((c.axes && c.axes[axis.id]) || null) : (c.bucket || null);
+  const setB = (c, val)=>{
+    if (isAxes){ c.axes = c.axes || {}; if (val) c.axes[axis.id]=val; else delete c.axes[axis.id]; }
+    else { c.bucket = val; }
+  };
+
+  app.innerHTML = `
+    <div class="dump-head" style="margin-bottom:10px">
+      <span class="emoji">${f.emoji}</span>
+      <h2>정리하기</h2>
+      <div class="sub">${isAxes
+        ? '기준을 골라 카드를 분류하세요. 같은 카드를 기준마다 다르게 둘 수 있어요.'
+        : '카드를 끌어다 칸에 넣으세요. 탭하면 다음 칸으로 넘어가요.'}</div>
+    </div>
+    ${isAxes ? `<div class="tabs">
+      ${f.organize.axes.map(a=>`<button class="tab ${a.id===state.axis?'active':''}" data-axis="${a.id}">${a.label}</button>`).join('')}
+    </div>`:''}
+    <div class="inbox-wrap">
+      <div class="col" data-bucket="inbox">
+        <div class="col-head"><span class="dot" style="background:var(--accent)"></span>받은 생각 <span class="num">0</span></div>
+        <div class="drop" data-bucket="inbox"></div>
+      </div>
+    </div>
+    <div class="columns">
+      ${buckets.map(b=>`<div class="col" data-bucket="${b.id}">
+        <div class="col-head"><span class="dot" style="background:${b.color}"></span>${esc(b.label)} <span class="num">0</span></div>
+        <div class="drop" data-bucket="${b.id}"></div>
+      </div>`).join('')}
+    </div>
+    <div class="dump-foot" style="border:none;justify-content:flex-end;gap:10px">
+      <button class="btn sec" id="editBtn">← 더 쏟기</button>
+      <button class="btn sec" id="copyBtn">정리 결과 복사</button>
+      <button class="btn" id="doneBtn">완료 · 저장됨 ✓</button>
+    </div>`;
+
+  let dragId = null;
+  const order = [null, ...buckets.map(b=>b.id)];
+  const persist = ()=> updateEntry({cards: entry.cards});
+
+  function place(){
+    app.querySelectorAll('.drop').forEach(d=>{
+      const bk = d.dataset.bucket;
+      const items = entry.cards.filter(c=> bk==='inbox' ? !getB(c) : getB(c)===bk);
+      d.innerHTML = items.map(c=>`
+        <div class="card-item" draggable="true" data-id="${c.id}">
+          <span class="x" data-del="${c.id}">✕</span>${esc(c.text)}
+        </div>`).join('') ||
+        `<div style="font-size:12px;color:var(--ink-soft);padding:4px 2px">${bk==='inbox'?'여기로 되돌릴 수 있어요':'비어 있음'}</div>`;
+    });
+    app.querySelectorAll('.col').forEach(col=>{
+      const bk = col.dataset.bucket;
+      col.querySelector('.num').textContent =
+        entry.cards.filter(c=> bk==='inbox' ? !getB(c) : getB(c)===bk).length;
+    });
+    bindCards();
+  }
+  function bindCards(){
+    app.querySelectorAll('.card-item').forEach(el=>{
+      el.ondragstart = (e)=>{ dragId=el.dataset.id; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; };
+      el.ondragend = ()=> el.classList.remove('dragging');
+      el.onclick = (e)=>{
+        if (e.target.dataset.del) return;
+        const card = entry.cards.find(c=>c.id===el.dataset.id);
+        const idx = order.indexOf(getB(card));
+        setB(card, order[(idx+1)%order.length]);
+        persist(); place();
+      };
+      const del = el.querySelector('.x');
+      if (del) del.onclick = (e)=>{
+        e.stopPropagation();
+        entry.cards = entry.cards.filter(c=>c.id!==el.dataset.id);
+        persist(); place();
+      };
+    });
+  }
+  app.querySelectorAll('.col').forEach(col=>{
+    col.ondragover = (e)=>{ e.preventDefault(); col.classList.add('drag-over'); };
+    col.ondragleave = ()=> col.classList.remove('drag-over');
+    col.ondrop = (e)=>{
+      e.preventDefault(); col.classList.remove('drag-over');
+      const card = entry.cards.find(c=>c.id===dragId);
+      if (card){ setB(card, col.dataset.bucket==='inbox' ? null : col.dataset.bucket); persist(); place(); }
+    };
+  });
+
+  place();
+
+  app.querySelectorAll('.tab').forEach(t=> t.onclick = ()=>{ state.axis = t.dataset.axis; render(); });
+  document.getElementById('editBtn').onclick = ()=>{ state.view='dump'; render(); };
+  document.getElementById('doneBtn').onclick = ()=>{ toast('저장됐어요. 잘하셨어요 🌿'); go('home'); };
+  document.getElementById('copyBtn').onclick = ()=> copyResult(entry);
+}
+
+function copyResult(entry){
+  const f = fmtById(entry.format);
+  let out = `${f.emoji} ${f.name} · ${fmtDate(entry.created)}\n\n`;
+  if (f.organize.type==='axes'){
+    f.organize.axes.forEach(axis=>{
+      out += `▶ ${axis.label}\n`;
+      axis.buckets.forEach(b=>{
+        const items = entry.cards.filter(c=>c.axes && c.axes[axis.id]===b.id);
+        if (items.length) out += `  ■ ${b.label}\n` + items.map(c=>`    - ${c.text}`).join('\n') + '\n';
+      });
+      const un = entry.cards.filter(c=>!c.axes || !c.axes[axis.id]);
+      if (un.length) out += `  ■ 미분류\n` + un.map(c=>`    - ${c.text}`).join('\n') + '\n';
+      out += '\n';
+    });
+  } else {
+    f.organize.buckets.forEach(b=>{
+      const items = entry.cards.filter(c=>c.bucket===b.id);
+      if (items.length) out += `■ ${b.label}\n` + items.map(c=>`  - ${c.text}`).join('\n') + '\n\n';
+    });
+    const inbox = entry.cards.filter(c=>!c.bucket);
+    if (inbox.length) out += `■ 미분류\n` + inbox.map(c=>`  - ${c.text}`).join('\n') + '\n';
+  }
+  navigator.clipboard.writeText(out.trim()).then(
+    ()=>toast('클립보드에 복사됨 📋'),
+    ()=>toast('복사 권한이 없어요')
+  );
+}
+
+/* ---------------- History ---------------- */
+function histItemHTML(e){
+  const f = fmtById(e.format);
+  return `<div class="hist-item" data-id="${e.id}">
+    <span class="del" data-del="${e.id}">삭제</span>
+    <div class="meta"><span>${f.emoji} ${f.name}</span><span>·</span><span>${fmtDate(e.created)}</span>
+      ${isOrganized(e)?'<span>· 정리됨 ✓</span>':''}</div>
+    <div class="preview">${esc(e.text.replace(/\n/g,' '))}</div>
+  </div>`;
+}
+function openEntry(id){
+  state.entryId = id;
+  const e = getEntry(); if (!e) return;
+  state.format = e.format; state.axis = null;
+  state.view = (e.cards && e.cards.length) ? 'organize' : 'dump';
+  render();
+}
+function bindHistItems(scope){
+  scope.querySelectorAll('.hist-item').forEach(it=>{
+    it.onclick = (ev)=>{
+      if (ev.target.dataset.del){
+        save(load().filter(e=>e.id!==ev.target.dataset.del));
+        render(); toast('삭제됨'); return;
+      }
+      openEntry(it.dataset.id);
+    };
+  });
+}
+
+function renderHistory(){
+  stopTimer();
+  app.className = 'wrap fade-in';
+  const all = load().filter(e=>e.text && e.text.trim());
+  if (!all.length){
+    app.innerHTML = `<div class="hero"><h1>기록</h1></div>
+      <div class="empty">아직 쏟아낸 기록이 없어요.<br>홈에서 하나 시작하거나, 백업 파일을 가져올 수 있어요.</div>
+      <div class="data-tools"><button class="btn sec" id="importBtn">⬆ 가져오기</button></div>`;
+    document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+    return;
+  }
+  // 기록이 있는 포맷만 필터칩으로
+  const usedIds = [...new Set(all.map(e=>e.format))];
+  const filters = [{id:'all', emoji:'🗂', name:'전체'},
+    ...FORMATS.filter(f=>usedIds.includes(f.id)).map(f=>({id:f.id, emoji:f.emoji, name:f.name}))];
+
+  const q = state.histQuery.trim().toLowerCase();
+  const shown = all.filter(e=>
+    (state.histFilter==='all' || e.format===state.histFilter) &&
+    (!q || e.text.toLowerCase().includes(q))
+  );
+
+  app.innerHTML = `
+    <div class="hero"><h1>기록</h1><p>지난 생각들을 다시 열어 정리할 수 있어요.</p></div>
+    <div class="hist-toolbar">
+      <input class="search" id="histSearch" type="search" placeholder="🔎 내용으로 검색…" value="${esc(state.histQuery)}" />
+      <div class="fchips">
+        ${filters.map(f=>`<button class="fchip ${state.histFilter===f.id?'active':''}" data-f="${f.id}">${f.emoji} ${f.name}</button>`).join('')}
+      </div>
+      <div class="data-tools">
+        <button class="btn sec" id="exportBtn">📤 내보내기</button>
+        <button class="btn sec" id="importBtn">⬆ 가져오기</button>
+      </div>
+    </div>
+    ${shown.length
+      ? shown.map(histItemHTML).join('')
+      : `<div class="empty">조건에 맞는 기록이 없어요.</div>`}
+    <p class="data-note">기록은 이 기기에만 저장돼요. 내보내기로 백업하면 다른 기기로 옮길 수 있어요.</p>`;
+
+  bindHistItems(app);
+  app.querySelectorAll('.fchip').forEach(c=> c.onclick = ()=>{ state.histFilter=c.dataset.f; renderHistory(); });
+  document.getElementById('exportBtn').onclick = exportData;
+  document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+  const search = document.getElementById('histSearch');
+  search.oninput = ()=>{
+    state.histQuery = search.value;
+    renderHistory();
+    const s = document.getElementById('histSearch');
+    s.focus(); s.setSelectionRange(s.value.length, s.value.length);
+  };
+}
+
+/* ---------------- Backup: export / import ---------------- */
+function exportData(){
+  const data = localStorage.getItem(KEY) || '[]';
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  const a = document.createElement('a');
+  a.href = url; a.download = `braindump-backup-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('백업 파일을 내보냈어요 📤');
+}
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try {
+      const incoming = JSON.parse(reader.result);
+      if (!Array.isArray(incoming)) throw new Error('형식 오류');
+      const map = new Map(load().map(e=>[e.id, e]));
+      let added = 0;
+      incoming.forEach(e=>{ if (e && e.id){ if (!map.has(e.id)) added++; map.set(e.id, e); } });
+      const merged = [...map.values()].sort((a,b)=>(b.created||0)-(a.created||0));
+      save(merged);
+      toast(`가져오기 완료 · ${added}개 추가됨`);
+      render();
+    } catch(err){ toast('가져오기 실패 · 올바른 백업 파일이 아니에요'); }
+  };
+  reader.readAsText(file);
+}
+document.getElementById('importFile').onchange = (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if (file) importData(file);
+  e.target.value = ''; // 같은 파일 다시 선택 가능하도록
+};
+
+/* ---------------- PWA: install prompt & service worker ---------------- */
+let deferredPrompt = null;
+const installBtn = document.getElementById('navInstall');
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault(); deferredPrompt = e; installBtn.style.display = '';
+});
+installBtn.onclick = async ()=>{
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null; installBtn.style.display = 'none';
+};
+window.addEventListener('appinstalled', ()=>{ installBtn.style.display = 'none'; toast('앱이 설치됐어요 🎉'); });
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('service-worker.js').catch(()=>{}));
+}
+
+/* ---------------- Nav ---------------- */
+function pruneEmpty(){ save(load().filter(e=> e.text && e.text.trim())); }
+function go(view){ state.view = view; render(); }
+
+document.getElementById('navHome').onclick = ()=>{ pruneEmpty(); go('home'); };
+document.getElementById('navHist').onclick = ()=>{ pruneEmpty(); go('history'); };
+
+render();
+</script>
+</body>
+</html>
