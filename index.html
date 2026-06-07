@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#a47551" />
+<meta name="color-scheme" content="light" />
 <title>Brain Dump · 생각 비우기</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icon-192.png" />
@@ -26,23 +27,7 @@
     --trash: #b3a695;
     --shadow: 0 6px 24px rgba(120, 95, 60, .14);
     --radius: 18px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #16120d;
-      --card: #302820;
-      --ink: #f7f0e3;
-      --ink-soft: #cbbda4;
-      --line: #4d4334;
-      --accent: #e3bd94;
-      --accent-soft: #3d3225;
-      --now: #e88d77;
-      --later: #e6b557;
-      --delegate: #9ab7ac;
-      --keep: #abc189;
-      --trash: #ada089;
-      --shadow: 0 8px 28px rgba(0,0,0,.55);
-    }
+    color-scheme: light; /* OS가 다크여도 항상 라이트로 렌더 */
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; padding: 0; }
@@ -235,13 +220,6 @@
   .hidden { display: none !important; }
   .fade-in { animation: fade .25s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(6px);} }
-
-  /* 다크 모드: 밝은 액센트 위 글자는 어둡게(대비 ↑) */
-  @media (prefers-color-scheme: dark) {
-    .btn { color: #241c14; }
-    .tab.active { color: #241c14; }
-    .fchip.active { color: #241c14; }
-  }
 </style>
 </head>
 <body>

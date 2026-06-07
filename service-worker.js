@@ -1,4 +1,4 @@
-const CACHE = 'braindump-v2';
+const CACHE = 'braindump-v3';
 const ASSETS = [
   './',
   './index.html',
