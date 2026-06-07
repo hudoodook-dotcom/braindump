@@ -1,4 +1,4 @@
-const CACHE = 'braindump-v1';
+const CACHE = 'braindump-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -21,10 +21,24 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// 캐시 우선, 없으면 네트워크(받아오면 캐시에 저장) → 오프라인 지원
+// HTML(페이지)은 네트워크 우선 → 항상 최신 화면. 오프라인이면 캐시로 폴백.
+// 그 외 정적 자원(아이콘/매니페스트)은 캐시 우선 → 빠르게.
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  const isHTML = req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html');
+
+  if (isHTML) {
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(req).then((cached) =>
       cached ||
