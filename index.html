@@ -57,9 +57,15 @@
   .ghost-btn {
     border: 1px solid var(--line); background: var(--card); color: var(--ink-soft);
     padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
-    cursor: pointer; transition: .15s;
+    cursor: pointer; transition: .15s; white-space: nowrap;
   }
   .ghost-btn:hover { color: var(--accent); border-color: var(--accent); }
+  /* 좁은 화면에서 헤더 버튼이 한 줄에 들어가도록 축소 */
+  @media (max-width: 480px){
+    .bar { padding: 10px 12px; gap: 6px; }
+    .logo { font-size: 15px; }
+    .ghost-btn { padding: 6px 9px; font-size: 12px; }
+  }
 
   /* Hero */
   .hero { text-align: center; padding: 14px 4px 22px; }
